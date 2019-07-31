@@ -32,11 +32,29 @@ do_rootfs() {
 		bbnote "Cleaning old rootfs directory"
 		${SUDO} rm -r ${ROOTFS}
 	fi
+
 	bbnote "Running debootstrap"
-	${SUDO} debootstrap ${DEBIAN_CODENAME} ${ROOTFS} ${DEBIAN_REPO}
+        case ${MACHINE} in
+                qemux86)
+                        ${SUDO} debootstrap --arch=${DEB_HOST_ARCH} ${DEBIAN_CODENAME} ${ROOTFS} ${DEBIAN_REPO}
+			;;
+                qemux86-64)
+			${SUDO} debootstrap ${DEBIAN_CODENAME} ${ROOTFS} ${DEBIAN_REPO}
+			;;
+               qemuarm|qemuarm64|qemumips)
+			${SUDO} debootstrap --arch=${DEB_HOST_ARCH} --foreign  ${DEBIAN_CODENAME} ${ROOTFS} ${DEBIAN_REPO}
+			${SUDO} cp /usr/bin/qemu-${ARCH}-static ${ROOTFS}/usr/bin/qemu-${ARCH}-static
+			bbnote "complete installation inside the chroot"
+			${CHROOT} env DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C LANGUAGE=C LANG=C /debootstrap/debootstrap --second-stage
+			;;
+		*)
+			bbnote "arch is not supported!"
+			exit 1
+			;;
+	esac
 
 	bbnote "Copying local apt repository to rootfs"
-	${SUDO} cp -r ${APT_REPO_DIR} ${ROOTFS}/${ROOTFS_APT_REPO_DIR}
+	${SUDO} cp -r ${APT_REPO_DIR} ${ROOTFS}${ROOTFS_APT_REPO_DIR}
 	# TODO: create Release file (now ignored by trusted=yes)
 	bbnote "Registering local apt repository to apt in rootfs"
 	${CHROOT} sh -c "echo \"deb [trusted=yes] file://${ROOTFS_APT_REPO_DIR} ${DEBIAN_CODENAME} main\" \

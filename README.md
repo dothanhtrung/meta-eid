@@ -118,3 +118,21 @@ This recipe fetches source code from remote, and has
 build & run-time dependencies on Debian packages and non-Debian package `baz`.
 
     $ bitbake foo
+
+Build qemu-image
+This recipe build qemu image for amd64, i386, arm, arm64, mips.
+Setting the target machine by changing value of  MACHINE variable in conf/local.conf to one of the following machines.
+
+    qemux86-64 (default)
+    qemux86
+    qemuarm
+    qemuarm64
+    qemumips
+
+For example, set target to QEMU ARM by adding the following to conf/local.conf.
+
+MACHINE = "qemuarm"
+
+Now, the build system is ready. Build Linux kernel and the minimal rootfs by the following command. It takes a while to complete (about 15 minutes).
+
+bitbake debian-image
